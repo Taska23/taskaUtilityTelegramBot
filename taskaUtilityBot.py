@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-version = "1.0.5"
+bot_version = '1.0.5'
 
 #add
 
@@ -18,7 +18,8 @@ def minecraft(message):
 
 @bot.message_handler(commands=['version'])
 def version(message):
-    bot.reply_to(message, 'Version: ' + version)
+    bot.reply_to(message, f'Version: {str(bot_version)}')
+    print(f'Version: {str(bot_version)}')
 
 
 @bot.message_handler(commands=['start'])
