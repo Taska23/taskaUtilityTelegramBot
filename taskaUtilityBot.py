@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
+version = "1.0.5"
 
 #add
 
@@ -13,6 +14,11 @@ def minecraft(message):
     markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_server'))
     bot.reply_to(message, 'Мониторинг состояния сервера Minecraft \n \n Статус: Active/Sleep/Inactive \n Версия: NaN \n Игроков: N/N \n Игроки: NaN \n \n Управление сервером:', reply_markup = markup)
 
+
+
+@bot.message_handler(commands=['version'])
+def version(message):
+    bot.reply_to(message, f'Version: {version}')
 
 
 @bot.message_handler(commands=['start'])
