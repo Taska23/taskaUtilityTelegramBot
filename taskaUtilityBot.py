@@ -18,7 +18,7 @@ def minecraft(message):
 
 @bot.message_handler(commands=['version'])
 def version(message):
-    bot.reply_to(message, f'Version: {version}')
+    bot.reply_to(message, 'Version: ' + version)
 
 
 @bot.message_handler(commands=['start'])
