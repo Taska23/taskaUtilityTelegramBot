@@ -17,14 +17,21 @@ def minecraft(message):
 
 @bot.message_handler(commands=['start'])
 def main(message):
-    bot.send_message(message.chat.id, 'Привет')
+    bot.send_message(message.chat.id, 'Привет')\
+
+@bot.message_handler(commands=['id'])
+def main(message):
+    bot.reply_to(message, f'ID: {message.from_user.id}')
+
+
+
 
 @bot.message_handler()
 def info(message):
     if message.text.lower() == 'привет':
         bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}')
-    elif message.text.lower() == 'id':
-        bot.reply_to(message, f'ID: {message.from_user.id}')
+
+
 
 
 @bot.callback_query_handler(func=lambda callback: True)
