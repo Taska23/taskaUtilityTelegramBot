@@ -1,10 +1,12 @@
 import telebot
 from telebot import types
 import sqlite3
+from mcstatus import JavaServer
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
+bot_version = '1.0.10'
 
-bot_version = '1.0.9'
+server = JavaServer.lookup("127.0.0.1")
 
 #add
 
@@ -64,11 +66,13 @@ def edit_user_perm_to_evalute(message):
 
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
+    status = server.status()
+    query = server.query()
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
     markup.add(types.InlineKeyboardButton('Перезапустить Сервер', callback_data='restart_minecraft_server'))
     markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_server'))
-    bot.reply_to(message, 'Мониторинг состояния сервера Minecraft \n \n Статус: Active/Sleep/Inactive \n Версия: NaN \n Игроков: N/N \n Игроки: NaN \n \n Управление сервером:', reply_markup = markup)
+    bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active/Sleep/Inactive \n Версия: {query.software.brand}, {status.version} \n Игроков: {status.players.online} / {query.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
 
 
 
