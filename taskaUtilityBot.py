@@ -6,7 +6,7 @@ from mcstatus import JavaServer
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
 bot_version = '1.0.10'
 
-server = JavaServer.lookup("127.0.0.1")
+
 
 #add
 
@@ -66,6 +66,7 @@ def edit_user_perm_to_evalute(message):
 
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
+    server = JavaServer.lookup("127.0.0.1")
     status = server.status()
     query = server.query()
     markup = types.InlineKeyboardMarkup()
