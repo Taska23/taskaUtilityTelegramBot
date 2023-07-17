@@ -108,7 +108,7 @@ def info(message):
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     if callback.data == 'start_minecraft_server':
-        subprocess.call('screen -dmS minecraft java -Xmx1G -Xms7G -jar /home/taska/mine_server/server.jar nogui', shell=True)
+        subprocess.call('screen -dmS minecraft java -Xmx7G -Xms1G -jar /home/taska/mine_server/server.jar nogui', shell=True)
     elif callback.data == 'restart_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
         subprocess.call('screen -dmS minecraft java -Xmx1G -Xms7G -jar /home/taska/mine_server/server.jar nogui', shell=True)
