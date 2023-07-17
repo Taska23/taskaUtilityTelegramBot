@@ -66,7 +66,7 @@ def edit_user_perm_to_evalute(message):
 
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
-    server = JavaServer.lookup("localhost")
+    server = JavaServer.lookup("localhost:25565")
     status = server.status()
     query = server.query()
     markup = types.InlineKeyboardMarkup()
