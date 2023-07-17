@@ -2,9 +2,10 @@ import telebot
 from telebot import types
 import sqlite3
 from mcstatus import JavaServer
+import subprocess
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.0.10'
+bot_version = '1.0.11'
 
 
 
@@ -66,15 +67,22 @@ def edit_user_perm_to_evalute(message):
 
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
-    server = JavaServer.lookup("localhost:25565")
-    status = server.status()
-    query = server.query()
     markup = types.InlineKeyboardMarkup()
     markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
     markup.add(types.InlineKeyboardButton('Перезапустить Сервер', callback_data='restart_minecraft_server'))
     markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_server'))
-    bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active/Sleep/Inactive \n Версия: {query.software.brand}, {status.version} \n Игроков: {status.players.online} / {query.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
 
+    try:
+        server = JavaServer.lookup("192.168.0.125:25565")
+        status = server.status()
+        query = server.query()
+
+        if status.players.online > 0:
+            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+        else:
+            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+    except ConnectionRefusedError:
+        bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:', reply_markup = markup)
 
 
 @bot.message_handler(commands=['version'])
@@ -100,8 +108,12 @@ def info(message):
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
     if callback.data == 'start_minecraft_server':
-        None #TODO
-
+        subprocess.call('screen -dmS minecraft java -Xmx1G -Xms7G -jar /home/taska/mine_server/server.jar nogui', shell=True)
+    elif callback.data == 'restart_minecraft_server':
+        subprocess.call('screen -S minecraft -X quit', shell=True)
+        subprocess.call('screen -dmS minecraft java -Xmx1G -Xms7G -jar /home/taska/mine_server/server.jar nogui', shell=True)
+    elif callback.data == 'stop_minecraft_server':
+        subprocess.call('screen -S minecraft -X quit', shell=True)
 
 def check_user_exists_by_id(user_id):
     conn = sqlite3.connect('tub_db.sql')
