@@ -88,7 +88,7 @@ def minecraft(message):
                 bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
 
 
-        except ConnectionRefusedError:
+        except (ConnectionRefusedError, BrokenPipeError):
             bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:',reply_markup=markup)
 
     else:
