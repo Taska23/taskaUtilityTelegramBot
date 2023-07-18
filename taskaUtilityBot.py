@@ -78,9 +78,9 @@ def minecraft(message):
         query = server.query()
 
         if status.players.online > 0:
-            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
         else:
-            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
     except TimeoutError:
         bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:', reply_markup = markup)
 
