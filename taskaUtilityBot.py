@@ -67,26 +67,37 @@ def edit_user_perm_to_evalute(message):
 
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
-    markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
-    markup.add(types.InlineKeyboardButton('Перезапустить Сервер', callback_data='restart_minecraft_server'))
-    markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_server'))
 
-    try:
-        server = JavaServer.lookup("192.168.0.125:25565")
-        status = server.status()
-        query = server.query()
+    if get_perm_level_by_id(message.from_user.id) > 10:
 
-        if status.players.online > 0:
-            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
-        else:
-            bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
-    except TimeoutError:
-        bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:', reply_markup = markup)
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
+        markup.add(types.InlineKeyboardButton('Перезапустить Сервер', callback_data='restart_minecraft_server'))
+        markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_server'))
+        initial_message = bot.send_message(message.chat.id, f'Мониторинг состояния сервера Minecraft \n Pinging...')
+        bot.send_chat_action(message.chat.id, "find_location")
+
+        try:
+            server = JavaServer.lookup("192.168.0.125:25565")
+            status = server.status()
+            query = server.query()
+
+            if status.players.online > 0:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+            else:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+
+
+        except ConnectionRefusedError:
+            bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:',reply_markup=markup)
+
+    else:
+        bot.send_message(message.chat.id, "Ты кто такой, что бы это делать?")
+
 
 
 @bot.message_handler(commands=['version'])
-def version(message):
+def version_of_bot(message):
     bot.reply_to(message, f'Version: {str(bot_version)}')
     print(f'Version: {str(bot_version)}')
 
