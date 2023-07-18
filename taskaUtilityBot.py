@@ -81,7 +81,7 @@ def minecraft(message):
             bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
         else:
             bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
-    except ConnectionRefusedError:
+    except TimeoutError:
         bot.reply_to(message, f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:', reply_markup = markup)
 
 
@@ -109,11 +109,15 @@ def info(message):
 def callback_message(callback):
     if callback.data == 'start_minecraft_server':
         subprocess.call('screen -dmS minecraft java -Xms1G -Xmx7G -jar server.jar nogui', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
     elif callback.data == 'restart_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
         subprocess.call('screen -dmS minecraft java -Xms1G -Xmx7G -jar server.jar nogui', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
     elif callback.data == 'stop_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
+
 
 def check_user_exists_by_id(user_id):
     conn = sqlite3.connect('tub_db.sql')
