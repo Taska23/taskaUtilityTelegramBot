@@ -162,7 +162,7 @@ def callback_message(callback):
 
     elif callback.data == 'alias':
         bot.send_chat_action(callback.message.chat.id, "upload_document")
-        folder_path = "resources/alias"
+        folder_path = "resources/alias/"
         file_pattern = os.path.join(folder_path, "alias_*.txt")
         try:
             files = glob.glob(file_pattern)
@@ -265,6 +265,7 @@ def format_sequence(sequence):
     sorted_words = sorted(words)
     formatted_sequence = '\n'.join(word.capitalize() for word in sorted_words)
     return formatted_sequence
+
 
 
 bot.polling(none_stop=True)
