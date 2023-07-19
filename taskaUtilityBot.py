@@ -15,6 +15,13 @@ bot_version = '1.1.3'
 #add
 
 
+@bot.message_handler(commands=['stop'])
+def stop_bot(message):
+    bot.send_message(message.chat.id, 'Bot is stopping...')
+    bot.stop_polling()
+
+
+
 @bot.message_handler(commands=['alias'])
 def alias(message):
     markup = types.InlineKeyboardMarkup()
