@@ -3,14 +3,35 @@ from telebot import types
 import sqlite3
 from mcstatus import JavaServer
 import subprocess
+import datetime
+import glob
+import os
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.0.11'
+bot_version = '1.1.2'
 
 
 
 #add
 
+
+@bot.message_handler(commands=['alias'])
+def alias(message):
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton('Сгенерировать alias.txt', callback_data='alias'))
+    output_text = format_sequence(message.text)
+    bot.send_message(message.chat.id, output_text, reply_markup=markup)
+    current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    file_name = f"resources/alias/alias_{current_datetime}.txt"
+    try:
+        # Открываем файл для записи
+        with open(file_name, "w") as file:
+            # Записываем строку в файл
+            file.write(output_text)
+
+        print(f"Файл '{file_name}' успешно сохранен.")
+    except Exception as e:
+        print(f"Ошибка при сохранении файла: {e}")
 
 @bot.message_handler(commands=['start'])
 def main(message):
@@ -118,16 +139,35 @@ def info(message):
 
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
+
     if callback.data == 'start_minecraft_server':
         subprocess.call('screen -dmS minecraft java -Xms1G -Xmx7G -jar server.jar nogui', shell=True)
         bot.send_chat_action(callback.message.chat.id, "find_location")
+
     elif callback.data == 'restart_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
         subprocess.call('screen -dmS minecraft java -Xms1G -Xmx7G -jar server.jar nogui', shell=True)
         bot.send_chat_action(callback.message.chat.id, "find_location")
+
     elif callback.data == 'stop_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
         bot.send_chat_action(callback.message.chat.id, "find_location")
+
+    elif callback.data == 'alias':
+        bot.send_chat_action(callback.message.chat.id, "upload_document")
+        folder_path = "resources/alias"
+        file_pattern = os.path.join(folder_path, "alias_*.txt")
+        try:
+            files = glob.glob(file_pattern)
+            sorted_files = sorted(files, key=os.path.getmtime, reverse=True)
+            if sorted_files:
+                newest_file = sorted_files[0]
+                print(f"Самый новый файл: {newest_file}")
+
+            else:
+                print("Нет сгенерированных файлов.")
+        except Exception as e:
+            print(f"Ошибка при поиске нового файла: {e}")
 
 
 def check_user_exists_by_id(user_id):
@@ -211,6 +251,12 @@ def get_perm_level_by_username(username):
         return None
 
 
+def format_sequence(sequence):
+    cleaned_sequence = ''.join(filter(str.isalpha, sequence.lower()))
+    words = cleaned_sequence.split()
+    sorted_words = sorted(words)
+    formatted_sequence = '\n'.join(word.capitalize() for word in sorted_words)
+    return formatted_sequence
 
 
 bot.polling(none_stop=True)
