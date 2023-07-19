@@ -262,16 +262,9 @@ def get_perm_level_by_username(username):
 
 
 def format_sequence(sequence):
-    # Удаляем специальные символы и преобразуем в нижний регистр
-    cleaned_sequence = ''.join(filter(str.isalpha, sequence.lower()))
-
-    # Разделяем последовательность на отдельные слова
-    words = cleaned_sequence.split()
-
-    # Форматируем каждое слово, начиная с заглавной буквы, и объединяем их в одну строку
-    formatted_sequence = '\n'.join(word.capitalize() for word in words)
-
-    return formatted_sequence
+    sequence = sequence.replace(',', '').replace('.', '').replace('/', '')
+    sequence = sequence.replace(' ', '\n')
+    return sequence
 
 
 
