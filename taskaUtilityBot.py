@@ -170,7 +170,9 @@ def callback_message(callback):
             if sorted_files:
                 newest_file = sorted_files[0]
                 print(f"Самый новый файл: {newest_file}")
-                bot.send_document(callback.message.chat.id, (folder_path + newest_file))
+                with open(newest_file, 'rb') as file:
+                    bot.send_document(callback.message.chat.id, file)
+
 
             else:
                 print("Нет сгенерированных файлов.")
