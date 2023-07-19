@@ -8,7 +8,7 @@ import glob
 import os
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.1.2'
+bot_version = '1.1.3'
 
 
 
