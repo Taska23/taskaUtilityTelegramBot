@@ -31,9 +31,7 @@ def alias(message):
     current_datetime = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_name = f"resources/alias/alias_{current_datetime}.txt"
     try:
-        # Открываем файл для записи
         with open(file_name, "w") as file:
-            # Записываем строку в файл
             file.write(output_text)
 
         print(f"Файл '{file_name}' успешно сохранен.")
@@ -262,7 +260,7 @@ def get_perm_level_by_username(username):
 
 
 def format_sequence(sequence):
-    sequence = sequence.replace(',', '').replace('.', '').replace('/', '')
+    sequence = sequence.replace(',', '').replace('.', '').replace('/', '').replace(';', '')
     sequence = sequence.replace(' ', '\n')
     return sequence
 
