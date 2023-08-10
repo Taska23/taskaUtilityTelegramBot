@@ -6,6 +6,7 @@ import subprocess
 import datetime
 import glob
 import os
+import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
 bot_version = '1.1.3'
@@ -14,6 +15,47 @@ bot_version = '1.1.3'
 
 #add
 
+
+@bot.message_handler(commands=['status'])
+def server_status(message):
+    cpu_usage = psutil.cpu_percent(interval=1)
+    avg_cpu_load = psutil.getloadavg()[1]  # Средняя загрузка за 5 минут
+    memory = psutil.virtual_memory()
+    swap = psutil.swap_memory()
+    disk = psutil.disk_usage("/")
+    battery = psutil.sensors_battery()
+
+    bot_message = f'Status: \n\n' \
+                  f'CPU: \n' \
+                  f'Текущая загрузка CPU: {cpu_usage}% \n' \
+                  f'Средняя загрузка CPU за 5 минут: {avg_cpu_load}% \n\n' \
+                  f'RAM: \n' \
+                  f'Всего оперативной памяти: {memory.total / (1024 ** 3):.2f} ГБ \n' \
+                  f'Используется оперативной памяти: {memory.used / (1024 ** 3):.2f} ГБ \n' \
+                  f'Доля используемой памяти: {memory.percent}% \n\n' \
+                  f'SWAP: \n' \
+                  f'Общий объем SWAP: {swap.total / (1024 ** 3):.2f} ГБ \n' \
+                  f'Используется SWAP: {swap.used / (1024 ** 3):.2f} ГБ \n' \
+                  f'Доля используемого SWAP: {swap.percent}% \n\n' \
+                  f'ROM: \n' \
+                  f'Общий объем диска: {disk.total / (1024 ** 3):.2f} ГБ \n' \
+                  f'Свободное место на диске: {disk.free / (1024 ** 3):.2f} ГБ \n' \
+                  f'Использовано места на диске: {disk.percent}%\n\n' \
+                  f'Battery: \n' \
+
+    if battery:
+        power_plugged = battery.power_plugged
+        if power_plugged:
+            status = "заряжается"
+        else:
+            status = "не заряжается"
+
+        bot_message += f'Заряд батареи: {battery.percent}%\n'
+        bot_message += f'Состояние: {status}\n'
+    else:
+        bot_message += "Информация о батарее недоступна на данной системе."
+
+    bot.send_message(message.chat.id, bot_message)
 
 @bot.message_handler(commands=['stop'])
 def stop_bot(message):
