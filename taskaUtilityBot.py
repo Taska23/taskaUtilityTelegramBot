@@ -237,20 +237,26 @@ def callback_message(callback):
 
         #ATM 7 mine:
 
+
+
     if callback.data == 'start_minecraft_atm7_server':
-        subprocess.call('screen -dmS minecraft_atm7 cd /home/taska/atm7/server-1.2.3/', shell=True)
-        subprocess.call('screen -S minecraft_atm7 -X ./run.sh', shell=True)
-        bot.send_chat_action(callback.message.chat.id, "find_location")
+        try:
+            # Команда для запуска скрипта в новой сессии screen
+            command = f'screen -dmS my_session_name sh /home/taska/atm7/server-1.2.3/run.sh'
+
+            # Запускаем команду с помощью subprocess
+            subprocess.run(command, shell=True, check=True)
+
+            print(f'Script /home/taska/atm7/server-1.2.3/run.sh started in a new screen session.')
+            bot.send_chat_action(callback.message.chat.id, "find_location")
+        except subprocess.CalledProcessError as e:
+            print(f'Error: {e}')
 
     elif callback.data == 'restart_minecraft_atm7_server':
-        subprocess.call('screen -S minecraft_atm7 -X quit', shell=True)
-        subprocess.call('screen -dmS minecraft_atm7 cd /home/taska/atm7/server-1.2.3/', shell=True)
-        subprocess.call('screen -S minecraft_atm7 -X ./run.sh', shell=True)
-        bot.send_chat_action(callback.message.chat.id, "find_location")
+
 
     elif callback.data == 'stop_minecraft_atm7_server':
-        subprocess.call('screen -S minecraft_atm7 -X quit', shell=True)
-        bot.send_chat_action(callback.message.chat.id, "find_location")
+
 
 
     #Alias
