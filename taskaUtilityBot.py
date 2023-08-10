@@ -9,7 +9,7 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.1.3'
+bot_version = '1.2.1'
 
 
 
@@ -164,6 +164,38 @@ def minecraft(message):
 
 
 
+
+@bot.message_handler(commands=['minecraft_atm7'])
+def minecraft(message):
+
+    if get_perm_level_by_id(message.from_user.id) > 10:
+
+        markup = types.InlineKeyboardMarkup()
+        markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_atm7_server'))
+        markup.add(types.InlineKeyboardButton('Перезапустить Сервер', callback_data='restart_minecraft_atm7_server'))
+        markup.add(types.InlineKeyboardButton('Остановить Сервер', callback_data='stop_minecraft_atm7_server'))
+        initial_message = bot.send_message(message.chat.id, f'Мониторинг состояния сервера Minecraft \n Pinging...')
+        bot.send_chat_action(message.chat.id, "find_location")
+
+        try:
+            server = JavaServer.lookup("192.168.0.125:25565")
+            status = server.status()
+            query = server.query()
+
+            if status.players.online > 0:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Active \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+            else:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Active(Sleep) \n IP: 176.38.114.39:25565 \n Версия: {query.software.brand}, {query.software.version} \n Игроков: {status.players.online} / {status.players.max} \n Игроки: {", ".join(query.players.names)} \n \n Управление сервером:', reply_markup = markup)
+
+
+        except (ConnectionRefusedError, BrokenPipeError):
+            bot.edit_message_text(chat_id=message.chat.id, message_id=initial_message.message_id, text= f'Мониторинг состояния сервера Minecraft \n \n Статус: Inactive \n Версия: Null, Null \n Игроков: Null / Null \n Игроки:  \n \n Управление сервером:',reply_markup=markup)
+
+    else:
+        bot.send_message(message.chat.id, "Ты кто такой, что бы это делать?")
+
+
+
 @bot.message_handler(commands=['version'])
 def version_of_bot(message):
     bot.reply_to(message, f'Version: {str(bot_version)}')
@@ -187,6 +219,8 @@ def info(message):
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
 
+    # Vanilla mine:
+
     if callback.data == 'start_minecraft_server':
         subprocess.call('screen -dmS minecraft java -Xms1G -Xmx7G -jar server.jar nogui', shell=True)
         bot.send_chat_action(callback.message.chat.id, "find_location")
@@ -199,6 +233,28 @@ def callback_message(callback):
     elif callback.data == 'stop_minecraft_server':
         subprocess.call('screen -S minecraft -X quit', shell=True)
         bot.send_chat_action(callback.message.chat.id, "find_location")
+
+
+        #ATM 7 mine:
+
+    if callback.data == 'start_minecraft_atm7_server':
+        subprocess.call('screen -dmS minecraft_atm7 cd /home/taska/atm7/server-1.2.3/', shell=True)
+        subprocess.call('screen -S minecraft_atm7 -X ./run.sh', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
+
+    elif callback.data == 'restart_minecraft_atm7_server':
+        subprocess.call('screen -S minecraft_atm7 -X quit', shell=True)
+        subprocess.call('screen -dmS minecraft_atm7 cd /home/taska/atm7/server-1.2.3/', shell=True)
+        subprocess.call('screen -S minecraft_atm7 -X ./run.sh', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
+
+    elif callback.data == 'stop_minecraft_atm7_server':
+        subprocess.call('screen -S minecraft_atm7 -X quit', shell=True)
+        bot.send_chat_action(callback.message.chat.id, "find_location")
+
+
+    #Alias
+
 
     elif callback.data == 'alias':
         bot.send_chat_action(callback.message.chat.id, "upload_document")
