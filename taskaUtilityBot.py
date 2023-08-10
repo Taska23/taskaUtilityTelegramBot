@@ -253,9 +253,12 @@ def callback_message(callback):
             print(f'Error: {e}')
 
     elif callback.data == 'restart_minecraft_atm7_server':
-
+        #TODO
+        None
 
     elif callback.data == 'stop_minecraft_atm7_server':
+        #TODO
+        None
 
 
 
