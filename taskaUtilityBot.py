@@ -246,6 +246,7 @@ def callback_message(callback):
 
             subprocess.call('screen -S minecraft_atm7 -dm ./start_server.sh')
 
+
         except subprocess.CalledProcessError as e:
             print(f'Error: {e}')
 
