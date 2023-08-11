@@ -241,14 +241,12 @@ def callback_message(callback):
 
     if callback.data == 'start_minecraft_atm7_server':
         try:
-            # Команда для запуска скрипта в новой сессии screen
-            command = f'screen -dmS my_session_name sh /home/taska/atm7/server-1.2.3/run.sh'
 
-            # Запускаем команду с помощью subprocess
-            subprocess.run(command, shell=True, check=True)
+            # /home/taska/atm7/server-1.2.3/run.sh
 
-            print(f'Script /home/taska/atm7/server-1.2.3/run.sh started in a new screen session.')
-            bot.send_chat_action(callback.message.chat.id, "find_location")
+            subprocess.call('screen -dmS minecraft_atm7')
+            subprocess.call('screen -S minecraft_atm7 -X cd atm7/server-1.2.3/')
+            subprocess.call('screen -S minecraft_atm7 -X ./run.sh')
         except subprocess.CalledProcessError as e:
             print(f'Error: {e}')
 
