@@ -244,7 +244,7 @@ def callback_message(callback):
 
             # /home/taska/atm7/server-1.2.3/run.sh
 
-            subprocess.call('screen -S minecraft_atm7 -dm ./start_server.sh')
+            subprocess.call('screen -S minecraft_atm7 -dm ./start_atm7_screen.sh')
 
 
         except subprocess.CalledProcessError as e:
