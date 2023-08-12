@@ -9,7 +9,7 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.2.1'
+bot_version = '1.2.2'
 
 
 
@@ -244,7 +244,7 @@ def callback_message(callback):
 
             # /home/taska/atm7/server-1.2.3/run.sh
 
-            subprocess.call('screen -S minecraft_atm7 -dm sh start_atm7_screen.sh')
+            subprocess.run(['nohup', 'bash', '/home/taska/atm7/server-1.2.3/run.sh', '&'])
 
 
         except subprocess.CalledProcessError as e:
