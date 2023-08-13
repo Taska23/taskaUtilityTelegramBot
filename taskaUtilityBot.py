@@ -243,8 +243,9 @@ def callback_message(callback):
         try:
 
             # /home/taska/atm7/server-1.2.3/run.sh
-
-            subprocess.run(['nohup', 'bash', '/home/taska/atm7/server-1.2.3/run.sh', '&'])
+            os.chdir('/home/taska/atm7/server-1.2.3/')
+            subprocess.run(['nohup', './run.sh', '&'])
+            os.chdir('/home/taska/taskaUtilityTelegramBot')
 
 
         except subprocess.CalledProcessError as e:
