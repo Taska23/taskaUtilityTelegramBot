@@ -9,11 +9,14 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.2.2'
+bot_version = '1.3.0'
 
 
 
 #add
+
+
+
 
 
 @bot.message_handler(commands=['status'])
@@ -28,7 +31,7 @@ def server_status(message):
     bot_message = f'Status: \n\n' \
                   f'CPU: \n' \
                   f'Текущая загрузка CPU: {cpu_usage}% \n' \
-                  f'Средняя загрузка CPU за 5 минут: {avg_cpu_load}% \n\n' \
+                  f'Средняя загрузка CPU за 5 минут: {avg_cpu_load * 10}% \n\n' \
                   f'RAM: \n' \
                   f'Всего оперативной памяти: {memory.total / (1024 ** 3):.2f} ГБ \n' \
                   f'Используется оперативной памяти: {memory.used / (1024 ** 3):.2f} ГБ \n' \
@@ -59,8 +62,9 @@ def server_status(message):
 
 @bot.message_handler(commands=['stop'])
 def stop_bot(message):
-    bot.send_message(message.chat.id, 'Bot is stopping...')
-    bot.stop_polling()
+    if get_perm_level_by_id(message.from_user.id) >= 80:
+        bot.send_message(message.chat.id, 'Bot is stopping...')
+        bot.stop_polling()
 
 
 
@@ -98,9 +102,129 @@ def main(message):
 
     print(message)
 
+
+@bot.message_handler(commands=['pass'])
+def pass_management(message):
+    if message.from_user.username != "Taska2399" and message.from_user.username != "DarkMagorik":
+        return
+
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS ph_pass (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, text TEXT)')
+    conn.commit()
+
+    if message.text.lower() == '/pass add':
+        bot.send_message(message.chat.id, 'Введите название для новой строки:')
+        bot.register_next_step_handler(message, add_new_pass)
+
+    if message.text == '/pass':
+        cur.execute('SELECT * FROM ph_pass')
+        passes = cur.fetchall()
+
+        if not passes:
+            bot.send_message(message.chat.id, 'База данных пуста.')
+            return
+        else:
+            keyboard = types.InlineKeyboardMarkup()
+            for row in passes:
+                pass_id = row[0]
+                pass_name = row[1]
+                pass_text = row[2]
+
+                keyboard.add(types.InlineKeyboardButton(pass_name, callback_data=f'show_pass_{pass_id}'))
+
+            bot.send_message(message.chat.id, 'Известные пароли:', reply_markup=keyboard)
+            return
+
+
+
+def add_new_pass(message):
+    pass_name = message.text
+
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('INSERT INTO ph_pass (name, text) VALUES (?, ?)', (pass_name, 'Пусто'))
+    conn.commit()
+
+    bot.send_message(message.chat.id, f'Добавлена новая запись с названием "{pass_name}" и текстом "Пусто".')
+    cur.close()
+    conn.close()
+
+
+
+def callback_show_pass(call):
+    pass_id = int(call.data.split('_')[-1])
+
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM ph_pass WHERE id = ?', (pass_id,))
+    pass_data = cur.fetchone()
+
+    if pass_data:
+        pass_name = pass_data[1]
+        pass_text = pass_data[2]
+
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(
+            types.InlineKeyboardButton('Изменить', callback_data=f'edit_pass_{pass_id}'),
+            types.InlineKeyboardButton('Удалить', callback_data=f'delete_pass_{pass_id}')
+        )
+
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text=f'Название: {pass_name}\n\nТекст: {pass_text}',
+                              reply_markup=keyboard)
+    else:
+        bot.send_message(call.message.chat.id, 'Запись не найдена.')
+
+
+def callback_delete_pass(call):
+    pass_id = int(call.data.split('_')[-1])
+
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('DELETE FROM ph_pass WHERE id = ?', (pass_id,))
+    conn.commit()
+
+    bot.delete_message(call.message.chat.id, call.message.message_id)
+    bot.send_message(call.message.chat.id, 'Запись удалена.')
+
+
+def callback_edit_pass(call):
+    pass_id = int(call.data.split('_')[-1])
+
+    bot.send_message(call.message.chat.id, 'Отправьте новый текст для записи.')
+    bot.register_next_step_handler(call.message, lambda msg, pid=pass_id: update_pass(msg, pid))
+
+
+def update_pass(message, pass_id):
+    new_text = message.text
+
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('UPDATE ph_pass SET text = ? WHERE id = ?', (new_text, pass_id))
+    conn.commit()
+
+    bot.send_message(message.chat.id, 'Запись обновлена.')
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('show_pass_'))
+def callback_show_pass_handler(call):
+    callback_show_pass(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('delete_pass_'))
+def callback_delete_pass_handler(call):
+    callback_delete_pass(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('edit_pass_'))
+def callback_edit_pass_handler(call):
+    callback_edit_pass(call)
+
+
 @bot.message_handler(commands=['evalute'])
 def evalute(message):
-    if get_perm_level_by_id(message.from_user.id) >= 10:
+    if get_perm_level_by_id(message.from_user.id) >= 80:
         bot.send_message(message.chat.id, 'Кого повышаем? \nПришли мне username того, кто заслужил повышение')
         bot.register_next_step_handler(message, check_user_to_evalute)
     else:
@@ -136,7 +260,7 @@ def edit_user_perm_to_evalute(message):
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
 
-    if get_perm_level_by_id(message.from_user.id) > 10:
+    if get_perm_level_by_id(message.from_user.id) > 20:
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
@@ -168,7 +292,7 @@ def minecraft(message):
 @bot.message_handler(commands=['minecraft_atm7'])
 def minecraft(message):
 
-    if get_perm_level_by_id(message.from_user.id) > 10:
+    if get_perm_level_by_id(message.from_user.id) > 30:
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_atm7_server'))
@@ -244,6 +368,7 @@ def callback_message(callback):
 
             # /home/taska/atm7/server-1.2.3/run.sh
             os.chdir('/home/taska/atm7/server-1.2.3/')
+
             subprocess.run(['nohup', './run.sh', '&'])
             os.chdir('/home/taska/taskaUtilityTelegramBot')
 
