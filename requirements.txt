@@ -1,3 +1,5 @@
 telebot~=0.0.5
 mcstatus
 psutil
+Pillow
+Wand

@@ -5,15 +5,123 @@ from mcstatus import JavaServer
 import subprocess
 import datetime
 import glob
+from PIL import Image
+from wand.image import Image as WandImage
 import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.4.5'
+bot_version = '1.5.0'
 
 
 
 #add
+
+
+
+
+
+
+# Обработчик команды /convert
+@bot.message_handler(commands=['convert'])
+def convert_images(message):
+    bot.send_message(message.chat.id, "Пожалуйста, отправьте файлы для конвертации.")
+
+# Обработчик для получения изображений и документов
+@bot.message_handler(content_types=['photo', 'document'])
+def handle_files(message):
+    # Здесь можно обработать отправленные файлы
+    file_id = None
+
+    if message.photo:
+        # Если отправлено фото, выберем последнее (с наибольшим разрешением)
+        file_id = message.photo[-1].file_id
+    elif message.document:
+        # Если отправлен документ, проверим, является ли он изображением
+        if message.document.mime_type.startswith('image/'):
+            file_id = message.document.file_id
+
+    if file_id:
+        file_info = bot.get_file(file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+
+        # Сохраняем файл на диск
+        file_extension = file_info.file_path.split('.')[-1]
+        file_name = f"{file_id}.{file_extension}"
+        with open(file_name, 'wb') as new_file:
+            new_file.write(downloaded_file)
+
+        # Предложение выбора формата
+        keyboard = types.ReplyKeyboardMarkup(row_width=3)
+        supported_formats = [".jpg", ".jpeg", ".png", ".webp", ".raw", ".nef", ".heic"] # Исправленное расширение
+        for format in supported_formats:
+            keyboard.add(types.KeyboardButton(format))
+
+        bot.send_message(message.chat.id, "Выберите целевой формат:", reply_markup=keyboard)
+    else:
+        bot.send_message(message.chat.id, "Извините, но я могу конвертировать только изображения.")
+
+# Обработчик для выбора целевого формата
+@bot.message_handler(func=lambda message: message.text in [".jpg", ".jpeg", ".png", ".webp", ".raw", ".nef", ".heic"])
+def handle_target_format(message):
+    target_format = message.text
+    # Здесь можно выполнить конвертацию изображений в выбранный формат
+    # И отправить результат пользователю
+    # Затем удалить изображения с диска, чтобы освободить место
+
+    # Переберем все файлы в папке и сконвертируем их
+    for file_name in os.listdir():
+        if os.path.isfile(file_name):
+            file_extension = file_name.split('.')[-1]
+            if file_extension in ['jpg', 'jpeg', 'png', 'webp', 'raw', 'nef', 'heic']:
+                image = None
+                if file_extension in ['jpg', 'jpeg', 'png', 'webp', 'raw']:
+                    image = Image.open(file_name)
+                elif file_extension == 'heic':
+                    with WandImage(filename=file_name) as img:
+                        img.format = 'jpeg'
+                        img.save(filename=file_name.replace('.heic', '.jpeg'))
+
+                if image:
+                    output_file_name = file_name.replace(file_extension, target_format[1:])
+                    image.save(output_file_name)
+
+                    # Отправляем изображение пользователю
+                    with open(output_file_name, 'rb') as output_file:
+                        bot.send_document(message.chat.id, output_file)
+
+                    # Удаление файла после отправки
+                    os.remove(output_file_name)
+
+                # Удаление исходного файла с диска
+                os.remove(file_name)
+
+    bot.send_message(message.chat.id, "Конвертация завершена. Файлы удалены с сервера.")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @bot.message_handler(commands=['patchlog'])
