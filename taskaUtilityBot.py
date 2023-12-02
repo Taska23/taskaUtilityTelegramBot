@@ -9,14 +9,41 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.3.0'
+bot_version = '1.4.0'
 
 
 
 #add
 
+@bot.message_handler(commands=['update'])
+def handle_update(message):
+    if get_perm_level_by_id(message.from_user.id) >= 80:  # Проверка разрешений пользователя
+        update_bot(message)
+    else:
+        bot.send_message(message.chat.id, "Недостаточно прав для обновления бота.")
 
 
+import subprocess
+
+
+def update_bot(message):
+    # Установка зависимостей из requirements.txt
+    try:
+        bot.send_message(message.chat.id, f'Текущая версия бота: {str(bot_version)}' )
+        subprocess.run(["pip", "install", "-r", "requirements.txt"])
+        bot.send_message(message.chat.id, "Зависимости обновлены успешно.")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"Ошибка при установке зависимостей: {e}")
+
+    # Обновление кода из репозитория GitHub
+    try:
+        subprocess.run(["git", "pull"])  # Обновление кода из репозитория
+        bot.send_message(message.chat.id, "Бот успешно обновлен. Перезапускаюсь...")
+
+        # Команда для перезапуска бота
+        subprocess.run(["python3", "taskaUtilityBot.py"])
+    except Exception as e:
+        bot.send_message(message.chat.id, f"Ошибка при обновлении бота: {e}")
 
 
 @bot.message_handler(commands=['status'])
@@ -66,8 +93,6 @@ def stop_bot(message):
         bot.send_message(message.chat.id, 'Bot is stopping...')
         bot.stop_polling()
 
-
-
 @bot.message_handler(commands=['alias'])
 def alias(message):
     markup = types.InlineKeyboardMarkup()
@@ -102,7 +127,6 @@ def main(message):
 
     print(message)
 
-
 @bot.message_handler(commands=['pass'])
 def pass_management(message):
     if message.from_user.username != "Taska2399" and message.from_user.username != "DarkMagorik":
@@ -136,8 +160,6 @@ def pass_management(message):
             bot.send_message(message.chat.id, 'Известные пароли:', reply_markup=keyboard)
             return
 
-
-
 def add_new_pass(message):
     pass_name = message.text
 
@@ -149,8 +171,6 @@ def add_new_pass(message):
     bot.send_message(message.chat.id, f'Добавлена новая запись с названием "{pass_name}" и текстом "Пусто".')
     cur.close()
     conn.close()
-
-
 
 def callback_show_pass(call):
     pass_id = int(call.data.split('_')[-1])
@@ -167,7 +187,8 @@ def callback_show_pass(call):
         keyboard = types.InlineKeyboardMarkup()
         keyboard.add(
             types.InlineKeyboardButton('Изменить', callback_data=f'edit_pass_{pass_id}'),
-            types.InlineKeyboardButton('Удалить', callback_data=f'delete_pass_{pass_id}')
+            types.InlineKeyboardButton('Удалить', callback_data=f'delete_pass_{pass_id}'),
+            types.InlineKeyboardButton('Назад', callback_data=f'back_to_previous')
         )
 
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -176,6 +197,28 @@ def callback_show_pass(call):
     else:
         bot.send_message(call.message.chat.id, 'Запись не найдена.')
 
+def callback_back_to_previous(call):
+    conn = sqlite3.connect('tub_db.sql')
+    cur = conn.cursor()
+    cur.execute('CREATE TABLE IF NOT EXISTS ph_pass (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, text TEXT)')
+    conn.commit()
+    cur.execute('SELECT * FROM ph_pass')
+    passes = cur.fetchall()
+
+    if not passes:
+        bot.edit_message_text(call.chat.id, 'База данных пуста.')
+        return
+    else:
+        keyboard = types.InlineKeyboardMarkup()
+        for row in passes:
+            pass_id = row[0]
+            pass_name = row[1]
+            pass_text = row[2]
+
+            keyboard.add(types.InlineKeyboardButton(pass_name, callback_data=f'show_pass_{pass_id}'))
+
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,text= 'Известные пароли:', reply_markup=keyboard)
+        return
 
 def callback_delete_pass(call):
     pass_id = int(call.data.split('_')[-1])
@@ -188,13 +231,11 @@ def callback_delete_pass(call):
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id, 'Запись удалена.')
 
-
 def callback_edit_pass(call):
     pass_id = int(call.data.split('_')[-1])
 
     bot.send_message(call.message.chat.id, 'Отправьте новый текст для записи.')
     bot.register_next_step_handler(call.message, lambda msg, pid=pass_id: update_pass(msg, pid))
-
 
 def update_pass(message, pass_id):
     new_text = message.text
@@ -206,21 +247,20 @@ def update_pass(message, pass_id):
 
     bot.send_message(message.chat.id, 'Запись обновлена.')
 
-
+@bot.callback_query_handler(func=lambda call: call.data == 'back_to_previous')
+def callback_back_to_previous_handler(call):
+    callback_back_to_previous(call)
 @bot.callback_query_handler(func=lambda call: call.data.startswith('show_pass_'))
 def callback_show_pass_handler(call):
     callback_show_pass(call)
-
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('delete_pass_'))
 def callback_delete_pass_handler(call):
     callback_delete_pass(call)
 
-
 @bot.callback_query_handler(func=lambda call: call.data.startswith('edit_pass_'))
 def callback_edit_pass_handler(call):
     callback_edit_pass(call)
-
 
 @bot.message_handler(commands=['evalute'])
 def evalute(message):
@@ -242,8 +282,6 @@ def check_user_to_evalute(message):
     else:
         bot.send_message(message.chat.id, 'Такой пользователь у нас не зарегистрирован. Ублюдок.')
 
-
-
 def edit_user_perm_to_evalute(message):
     message_text = message.text.strip()
 
@@ -256,11 +294,10 @@ def edit_user_perm_to_evalute(message):
     else:
         bot.send_message(message.chat.id, 'Число введи, блять')
 
-
 @bot.message_handler(commands=['minecraft'])
 def minecraft(message):
 
-    if get_perm_level_by_id(message.from_user.id) > 20:
+    if get_perm_level_by_id(message.from_user.id) >= 20:
 
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton('Запустить Сервер', callback_data='start_minecraft_server'))
@@ -285,9 +322,6 @@ def minecraft(message):
 
     else:
         bot.send_message(message.chat.id, "Ты кто такой, что бы это делать?")
-
-
-
 
 @bot.message_handler(commands=['minecraft_atm7'])
 def minecraft(message):
@@ -318,8 +352,6 @@ def minecraft(message):
     else:
         bot.send_message(message.chat.id, "Ты кто такой, что бы это делать?")
 
-
-
 @bot.message_handler(commands=['version'])
 def version_of_bot(message):
     bot.reply_to(message, f'Version: {str(bot_version)}')
@@ -329,16 +361,10 @@ def version_of_bot(message):
 def main(message):
     bot.reply_to(message, f'ID: {message.from_user.id}')
 
-
-
-
 @bot.message_handler()
 def info(message):
     if message.text.lower() == 'привет':
         bot.send_message(message.chat.id, f'Привет, {message.from_user.first_name}')
-
-
-
 
 @bot.callback_query_handler(func=lambda callback: True)
 def callback_message(callback):
@@ -408,7 +434,6 @@ def callback_message(callback):
         except Exception as e:
             print(f"Ошибка при поиске нового файла: {e}")
 
-
 def check_user_exists_by_id(user_id):
     conn = sqlite3.connect('tub_db.sql')
     cursor = conn.cursor()
@@ -423,7 +448,6 @@ def check_user_exists_by_id(user_id):
         return True
     else:
         return False
-
 
 def check_user_exists_by_username(username):
     conn = sqlite3.connect('tub_db.sql')
@@ -440,7 +464,6 @@ def check_user_exists_by_username(username):
     else:
         return False
 
-
 def get_perm_level_by_id(user_id):
     conn = sqlite3.connect('tub_db.sql')
     cursor = conn.cursor()
@@ -454,7 +477,6 @@ def get_perm_level_by_id(user_id):
         return result[0]
     else:
         return None
-
 
 def update_perm_level_by_id(user_id, new_perm_level):
     conn = sqlite3.connect('tub_db.sql')
@@ -474,7 +496,6 @@ def update_perm_level_by_username(username, new_perm_level):
     cursor.close()
     conn.close()
 
-
 def get_perm_level_by_username(username):
     conn = sqlite3.connect('tub_db.sql')
     cursor = conn.cursor()
@@ -488,7 +509,6 @@ def get_perm_level_by_username(username):
         return result[0]
     else:
         return None
-
 
 def format_sequence(sequence):
     sequence = sequence.replace(',', '').replace('.', '').replace('/', '').replace(';', '')
