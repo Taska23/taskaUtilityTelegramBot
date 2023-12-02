@@ -9,11 +9,56 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.4.2'
+bot_version = '1.4.4'
 
 
 
 #add
+
+
+@bot.message_handler(commands=['patchlog'])
+def patchlog(message):
+    bot.send_message(message.chat.id, f'Patchlog: \n\n' \
+                                      f'1.4.4: \n Добавлен /help  \n\n' \
+                                      f'1.4.3: \n Добавлен атчлог :) \n\n' \
+                                      f'1.4.2: \n Фикс системы обновления бота\n\n' \
+                                      f'1.4.1:  \n Фикс уровней доступа для некоторых команд\n\n' \
+                                      f'1.4.0:  \n Система автоматических обновлений\n\n' \
+                                      f'1.3.0:  \n QOL, Добавлен модный лаунчер майнкрафта\n\n' \
+                                      f'1.2.0:  \n alias, статус железа\n\n' \
+                                      f'1.1.0:  \n Система рангов, бд\n\n' \
+                     )
+
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_message(message.chat.id, f'# Welcome to Taska Utility Bot!\n\n' \
+                                    f'Привет. Этот бот я написал сам, по большей части - для себя. Некторые функции написаны специально для моих друзей, но даже если мы не знакомы - ты всё ещё можешь найти тут полезные функции.\n' \
+                                    f'Большая часть функционала доступна всем пользователям, но некоторые функции доступны только пользователям с определённым permission_level. Ниже приведены доступные тебе команды.\n' \
+                                    f'Твой permission_level = {get_perm_level_by_id(message.from_user.id)}, tier = {get_perm_level_by_id(message.from_user.id) // 10}\n\n' \
+                                    f'## Tier 0\n' \
+                                      f'/start \n'
+                                      f'/help\n'
+                                      f'/version\n'
+                                      f'/status\n'
+                                      f'/alias\t#Временно в тир 0\n'
+                                      f'/save\t#WIP\n' \
+                                    
+                                    f'\n## Tier 1\n\n\n' \
+                                    f'#WIP\n\n\n' \
+                                    
+                                    f'## Tier 2\n'
+                                      f'/minecraft\n\n' \
+                                    
+                                    f'## Tier 3\n'
+                                      f'/minecraft_atm7'
+                                      f'\n\n\n' \
+                                    
+                                    f'## Tier 8\n'
+                                      f'/evalute'
+                                      f'\n\n\n' \
+                                    
+                                    f'# Tier Extra\n/pass'
+                     )
 
 @bot.message_handler(commands=['update'])
 def handle_update(message):
@@ -21,10 +66,6 @@ def handle_update(message):
         update_bot(message)
     else:
         bot.send_message(message.chat.id, "Недостаточно прав для обновления бота.")
-
-
-import subprocess
-
 
 def update_bot(message):
     # Установка зависимостей из requirements.txt
@@ -44,7 +85,6 @@ def update_bot(message):
         subprocess.run(["python3", "taskaUtilityBot.py"])
     except Exception as e:
         bot.send_message(message.chat.id, f"Ошибка при обновлении бота: {e}")
-
 
 @bot.message_handler(commands=['status'])
 def server_status(message):
