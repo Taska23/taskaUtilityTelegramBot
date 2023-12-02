@@ -9,7 +9,7 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.4.4'
+bot_version = '1.4.5'
 
 
 
@@ -70,6 +70,7 @@ def handle_update(message):
 def update_bot(message):
     # Установка зависимостей из requirements.txt
     try:
+        os.chdir('/home/taska/taskaUtilityTelegramBot')
         bot.send_message(message.chat.id, f'Текущая версия бота: {str(bot_version)}' )
         subprocess.run(["pip", "install", "-r", "requirements.txt"])
         bot.send_message(message.chat.id, "Зависимости обновлены успешно.")
@@ -78,10 +79,12 @@ def update_bot(message):
 
     # Обновление кода из репозитория GitHub
     try:
+        os.chdir('/home/taska/taskaUtilityTelegramBot')
         subprocess.run(["git", "pull"])  # Обновление кода из репозитория
         bot.send_message(message.chat.id, "Бот успешно обновлен. Перезапускаюсь...")
 
         # Команда для перезапуска бота
+        os.chdir('/home/taska/taskaUtilityTelegramBot')
         subprocess.run(["python3", "taskaUtilityBot.py"])
     except Exception as e:
         bot.send_message(message.chat.id, f"Ошибка при обновлении бота: {e}")
