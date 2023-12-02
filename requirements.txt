@@ -3,3 +3,4 @@ mcstatus
 psutil
 Pillow
 Wand
+pyheif

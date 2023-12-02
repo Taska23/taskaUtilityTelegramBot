@@ -6,7 +6,7 @@ import subprocess
 import datetime
 import glob
 from PIL import Image
-from wand.image import Image as WandImage
+import pyheif
 import os
 import psutil
 
@@ -16,9 +16,6 @@ bot_version = '1.5.0'
 
 
 #add
-
-
-
 
 
 
@@ -65,9 +62,7 @@ def handle_files(message):
 @bot.message_handler(func=lambda message: message.text in [".jpg", ".jpeg", ".png", ".webp", ".raw", ".nef", ".heic"])
 def handle_target_format(message):
     target_format = message.text
-    # Здесь можно выполнить конвертацию изображений в выбранный формат
-    # И отправить результат пользователю
-    # Затем удалить изображения с диска, чтобы освободить место
+    bot.send_chat_action(message.chat.id, 'typing')  # Изменение статуса бота
 
     # Переберем все файлы в папке и сконвертируем их
     for file_name in os.listdir():
@@ -78,9 +73,15 @@ def handle_target_format(message):
                 if file_extension in ['jpg', 'jpeg', 'png', 'webp', 'raw']:
                     image = Image.open(file_name)
                 elif file_extension == 'heic':
-                    with WandImage(filename=file_name) as img:
-                        img.format = 'jpeg'
-                        img.save(filename=file_name.replace('.heic', '.jpeg'))
+                    heif_file = pyheif.read(file_name)
+                    image = Image.frombytes(
+                        heif_file.mode,
+                        heif_file.size,
+                        heif_file.data,
+                        "raw",
+                        heif_file.mode,
+                        heif_file.stride,
+                    )
 
                 if image:
                     output_file_name = file_name.replace(file_extension, target_format[1:])
@@ -96,7 +97,11 @@ def handle_target_format(message):
                 # Удаление исходного файла с диска
                 os.remove(file_name)
 
-    bot.send_message(message.chat.id, "Конвертация завершена. Файлы удалены с сервера.")
+    # Убираем клавиатуру после завершения метода
+    bot.send_message(message.chat.id, "Конвертация завершена. Файлы удалены с сервера.", reply_markup=types.ReplyKeyboardRemove())
+
+
+
 
 
 
