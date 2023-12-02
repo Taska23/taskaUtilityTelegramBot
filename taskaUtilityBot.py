@@ -9,7 +9,7 @@ import os
 import psutil
 
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.4.0'
+bot_version = '1.4.1'
 
 
 
