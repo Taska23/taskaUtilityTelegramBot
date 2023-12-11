@@ -61,9 +61,7 @@ def handle_files(message):
         markup = telebot.types.ReplyKeyboardMarkup(row_width=2)
         markup.add('.jpg', '.png', '.heic')
         bot.send_message(message.chat.id, "Выберите целевое расширение:", reply_markup=markup)
-    else:
-        if message.text and not message.text.startswith('/'):
-            bot.send_message(message.chat.id, "Пожалуйста, начните с команды /convert для конвертации файлов.")
+    # Убран блок else для обработки других команд или текстовых сообщений
 
 @bot.message_handler(func=lambda message: True)
 def handle_conversion(message):
@@ -89,10 +87,7 @@ def handle_conversion(message):
         os.rmdir(user_folder)
         bot.send_message(message.chat.id, "Конвертация завершена. Файлы удалены.")
         waiting_for_conversion[user_id] = False
-    else:
-        if message.text and not message.text.startswith('/'):
-            bot.send_message(message.chat.id, "Пожалуйста, начните с команды /convert для конвертации файлов.")
-
+    # Убран блок else для обработки других команд или текстовых сообщений
 
 
 
