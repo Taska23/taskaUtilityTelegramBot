@@ -5,12 +5,14 @@ from mcstatus import JavaServer
 import subprocess
 import datetime
 import glob
-
+from PIL import Image
 import os
 import psutil
 
+
+
 bot = telebot.TeleBot('6366976096:AAG-ouDXdOASxnB0WRuqeZf-BO3RLbrfeRQ')
-bot_version = '1.5.0'
+bot_version = '1.5.1'
 
 
 
@@ -24,10 +26,157 @@ bot_version = '1.5.0'
 
 
 
+waiting_for_conversion = {}  # Словарь для хранения статуса ожидания конвертации по каждому пользователю
+
+@bot.message_handler(commands=['convert'])
+def convert_command(message):
+    user_id = message.from_user.id
+    waiting_for_conversion[user_id] = True
+    bot.reply_to(message, "Отправьте файлы, которые нужно конвертировать\n Для выхода из режима конвертации используй /cancel (Иначе бот будет пытаться конвертировать любую отправленную ему фотографию)")
+
+@bot.message_handler(commands=['cancel'])
+def cancel_command(message):
+    user_id = message.from_user.id
+    if user_id in waiting_for_conversion:
+        waiting_for_conversion[user_id] = False
+        bot.reply_to(message, "Режим ожидания файлов отменен")
+
+@bot.message_handler(content_types=['photo', 'document'])
+def handle_files(message):
+    user_id = message.from_user.id
+    if user_id in waiting_for_conversion and waiting_for_conversion[user_id]:
+        if message.content_type == 'photo':
+            bot.reply_to(message, "Во избежании потери качества изображения в дальнейшем отправляйте картинки файлом")
+
+            # Создание папки для пользователя, если ее нет
+        user_folder = f"user_{user_id}"
+        if not os.path.exists(user_folder):
+            os.makedirs(user_folder)
+
+        # Сохранение файлов на диск
+        file_id = None
+        if message.content_type == 'photo':
+            file_id = message.photo[-1].file_id
+        elif message.content_type == 'document':
+            file_id = message.document.file_id
+
+        file_info = bot.get_file(file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        file_ext = file_info.file_path.split('.')[-1]
+
+        file_path = f"{user_folder}/{file_id}.{file_ext}"
+        with open(file_path, 'wb') as new_file:
+            new_file.write(downloaded_file)
+
+        # Отправка клавиатуры выбора расширения
+        markup = telebot.types.ReplyKeyboardMarkup(row_width=2)
+        markup.add('.jpg', '.png', '.heic')  # Добавьте другие форматы по желанию
+        bot.send_message(message.chat.id, "Выберите целевое расширение:", reply_markup=markup)
+
+    else:
+        bot.send_message(message.chat.id, "Пожалуйста, начните с команды /convert для конвертации файлов.")
+
+@bot.message_handler(func=lambda message: True)
+def handle_conversion(message):
+    user_id = message.from_user.id
+    user_folder = f"user_{user_id}"
+
+    if message.text.startswith('.') and user_id in waiting_for_conversion and waiting_for_conversion[user_id]:
+        target_extension = message.text
+        files = os.listdir(user_folder)
+
+        for file in files:
+            if file != user_folder:
+                image = Image.open(f"{user_folder}/{file}")
+                converted_file_path = f"{user_folder}/{file.split('.')[0]}{target_extension}"
+                image.save(converted_file_path, quality=95)  # Максимальные настройки качества
+
+                with open(converted_file_path, 'rb') as converted_file:
+                    bot.send_document(message.chat.id, converted_file)
+
+                os.remove(f"{user_folder}/{file}")
+                os.remove(converted_file_path)
+
+        os.rmdir(user_folder)
+        bot.send_message(message.chat.id, "Конвертация завершена. Файлы удалены с сервера.")
+        waiting_for_conversion[user_id] = False
+    else:
+        bot.send_message(message.chat.id, "Пожалуйста, начните с команды /convert для конвертации файлов.")
+
+
+bot.polling()
 
 
 
 
+
+
+
+
+
+
+
+
+# Обработчик команды /convert
+def convert_command(update, context):
+    user_id = update.message.from_user.id
+    context.user_data[user_id] = {'photos': []}  # Создаем пустой список для хранения фотографий пользователя
+
+    # Отправляем пользователю сообщение
+    update.message.reply_text("Отправьте файлы, которые нужно конвертировать")
+
+# Обработчик для файлов и фотографий, отправленных пользователем
+def handle_files(update, context):
+    user_id = update.message.from_user.id
+    user_data = context.user_data[user_id]
+
+    # Получаем список файлов/фотографий, отправленных пользователем
+    files = update.message.document or update.message.photo
+
+    for file in files:
+        file_id = file.file_id
+        file_obj = context.bot.get_file(file_id)
+        file_obj.download(f"photos/{user_id}/{file_id}.jpg")  # Сохраняем файл на диск (в формате jpg)
+
+        if isinstance(file, update.message.photo):
+            update.message.reply_text("Во избежании потери качества изображения в дальнейшем отправляйте картинки файлом")
+        else:
+            user_data['photos'].append(file_id)  # Добавляем файл в список для конвертации
+
+    if user_data['photos']:
+        # Предлагаем пользователю выбрать целевое расширение для конвертации файлов
+        keyboard = [['.jpg', '.png', '.heic']]  # Возможные варианты расширений
+        reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+        update.message.reply_text("Выберите целевое расширение для отправляемых файлов", reply_markup=reply_markup)
+
+# Обработчик для выбора целевого расширения
+def handle_extension(update, context):
+    user_id = update.message.from_user.id
+    user_data = context.user_data[user_id]
+
+    chosen_extension = update.message.text
+    files_to_convert = user_data['photos']
+
+    # Конвертируем выбранные файлы
+    for file_id in files_to_convert:
+        file_path = f"photos/{user_id}/{file_id}.jpg"  # Путь к файлу на диске
+        image = Image.open(file_path)
+        converted_file_path = f"photos/{user_id}/{file_id}{chosen_extension}"  # Путь для конвертированного файла
+        image.save(converted_file_path, quality=95)  # Сохраняем с максимальным качеством
+
+        # Отправляем конвертированный файл пользователю
+        context.bot.send_document(chat_id=user_id, document=open(converted_file_path, 'rb'))
+
+        # Удаляем скачанные и конвертированные фотографии пользователя
+        os.remove(file_path)
+        os.remove(converted_file_path)
+
+    del context.user_data[user_id]  # Удаляем данные пользователя из контекста
+
+# Добавляем обработчики команды /convert и файлов/фотографий
+dispatcher.add_handler(CommandHandler('convert', convert_command))
+dispatcher.add_handler(MessageHandler(Filters.document | Filters.photo, handle_files))
+dispatcher.add_handler(MessageHandler(Filters.regex(r'^\.(jpg|png|heic)$'), handle_extension))
 
 
 
