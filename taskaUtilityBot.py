@@ -72,7 +72,6 @@ def handle_files(message):
         markup = telebot.types.ReplyKeyboardMarkup(row_width=2)
         markup.add('.jpg', '.png', '.heic')  # Добавьте другие форматы по желанию
         bot.send_message(message.chat.id, "Выберите целевое расширение:", reply_markup=markup)
-
     else:
         bot.send_message(message.chat.id, "Пожалуйста, начните с команды /convert для конвертации файлов.")
 
